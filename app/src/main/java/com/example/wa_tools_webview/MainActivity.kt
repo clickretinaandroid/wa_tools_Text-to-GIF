@@ -1,9 +1,12 @@
 package com.example.wa_tools_webview
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
@@ -11,6 +14,8 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
 import kotlinx.android.synthetic.main.activity_main.*
+import java.net.URISyntaxException
+import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
@@ -21,7 +26,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         initViews()
-        Admob()
+        adMob()
         web2()
 
         btn1.setOnClickListener(object : View.OnClickListener {
@@ -60,11 +65,49 @@ class MainActivity : AppCompatActivity() {
                     mProgressBar.visibility = View.GONE
                     super.onPageFinished(view, url)
                 }
+                override fun shouldOverrideUrlLoading(view:WebView,
+                                             request: WebResourceRequest
+                ):Boolean {
+                    var uri = request.getUrl()
+                    if (Objects.equals(uri.getScheme(), "whatsapp"))
+                    {
+                        try
+                        {
+                            val intent = Intent.parseUri(request.getUrl().toString(), Intent.URI_INTENT_SCHEME)
+                            if (intent.resolveActivity(getPackageManager()) != null)
+                                startActivity(intent)
+                            return true
+                        }
+                        catch (use: URISyntaxException) {
+                            Log.e("Tag", use.getReason())
+                        }
+                    }
+                    if (uri.toString() == "https://cliphy.io/")
+                    {
+                        try
+                        {
+                            buttoVisible()
+                            return true
+                        }
+                        catch (use: URISyntaxException) {
+                            Log.e("Tag", use.getReason())
+                        }
+                    }
+                    else
+                    {
+                        btn1.visibility = if (btn1.visibility == View.VISIBLE) {
+                            View.INVISIBLE
+                        } else {
+                            View.INVISIBLE
+                        }
+                    }
+                    return super.shouldOverrideUrlLoading(view, request)
+                }
             }
         }
     }
 
-    private fun Admob() {
+    private fun adMob() {
         MobileAds.initialize(this) {}
         val adRequest = AdRequest.Builder().build()
         mAdView.loadAd(adRequest)
@@ -74,14 +117,18 @@ class MainActivity : AppCompatActivity() {
     override fun onBackPressed() {
         if (webView.canGoBack()) {
             webView.goBack()
-            btn1.visibility = if (btn1.visibility == View.INVISIBLE) {
-                View.VISIBLE
-            } else {
-                View.INVISIBLE
-            }
+           //buttoVisible()
 
         } else {
             super.onBackPressed()
+        }
+    }
+
+    fun buttoVisible(){
+        btn1.visibility = if (btn1.visibility == View.INVISIBLE) {
+            View.VISIBLE
+        } else {
+            View.INVISIBLE
         }
     }
 }
